@@ -230,4 +230,5 @@ config XIMI_SUNNY
         default n
 
 
+source "drivers/kernelsu/Kconfig"
 endmenu
