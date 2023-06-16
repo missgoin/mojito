@@ -63,7 +63,7 @@ make -j$(nproc --all) O=out ARCH=arm64 \
     CROSS_COMPILE=$GCC_64_DIR/bin/aarch64-linux-android- \
     CROSS_COMPILE_ARM32=$GCC_32_DIR/bin/arm-linux-androideabi- \
     CLANG_TRIPLE=aarch64-linux-gnu- \
-    Image.gz-dtb dtbo.img
+    Image dtbo.img
 
 if [ -f "out/arch/arm64/boot/Image.gz-dtb" ] && [ -f "out/arch/arm64/boot/dtbo.img" ]; then
 echo -e "\nKernel compiled succesfully! Zipping up...\n"
@@ -74,10 +74,13 @@ echo -e "\nKernel compiled succesfully! Zipping up...\n"
 #echo -e "\nAnyKernel3 repo not found locally and cloning failed! Aborting..."
 #exit 1
 #fi
-git clone --depth=1 https://github.com/missgoin/AnyKernel3.git
 
-cp out/arch/arm64/boot/Image.gz-dtb AnyKernel3
+#git clone --depth=1 https://github.com/missgoin/AnyKernel3.git
+git clone --depth=1 https://github.com/neternels/anykernel3 -b sunny AnyKernel3
+
+cp out/arch/arm64/boot/Image AnyKernel3
 cp out/arch/arm64/boot/dtbo.img AnyKernel3
+
 rm -f *zip
 cd AnyKernel3
 zip -r9 "../$ZIPNAME" *

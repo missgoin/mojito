@@ -11,22 +11,22 @@ KERNEL_DIR="$(pwd)"
 ##----------------------------------------------------------##
 # Device Name and Model
 MODEL=Xiaomi
-DEVICE=ginkgo
+DEVICE=neternels
 
 # Kernel Version Code
 #VERSION=
 
 # Kernel Defconfig
-DEFCONFIG=${DEVICE}-perf_defconfig
+DEFCONFIG=${DEVICE}_defconfig
 
 # Select LTO variant ( Full LTO by default )
-DISABLE_LTO=0
-THIN_LTO=1
+DISABLE_LTO=1
+THIN_LTO=0
 
 # Files
-IMAGE=$(pwd)/out/arch/arm64/boot/Image.gz-dtb
+IMAGE=$(pwd)/out/arch/arm64/boot/Image
 DTBO=$(pwd)/out/arch/arm64/boot/dtbo.img
-#DTB=$(pwd)/out/arch/arm64/boot/dts/qcom
+DTB=$(pwd)/out/arch/arm64/boot/dts/qcom/sm6150.dtb
 
 # Verbose Build
 VERBOSE=0
@@ -43,12 +43,12 @@ TANGGAL=$(date +"%F%S")
 # Specify Final Zip Name
 ZIPNAME=SUPER.KERNEL
 FINAL_ZIP=${ZIPNAME}-${DEVICE}-${TANGGAL}.zip
-FINAL_ZIP_ALIAS=Karenulgink-${TANGGAL}.zip
+FINAL_ZIP_ALIAS=Karenulmoji-${TANGGAL}.zip
 
 ##----------------------------------------------------------##
 # Specify compiler.
 
-COMPILER=xrage
+COMPILER=eva
 
 ##----------------------------------------------------------##
 # Specify Linker
@@ -130,12 +130,25 @@ function cloneTC() {
 	export KERNEL_CCOMPILE32_PATH="${KERNEL_DIR}/gcc32"
     export KERNEL_CCOMPILE32="arm-linux-androideabi-"
     export PATH="$KERNEL_CCOMPILE32_PATH/bin:$PATH"
+    
+    elif [ $COMPILER = "evagcc" ]; 
+    then
+      if [ ! -d "${KERNEL_DIR}/gcc64" ]; then
+        curl -sL https://github.com/cyberknight777/gcc-arm64/archive/refs/heads/master.tar.gz | tar -xzf -
+        mv "${KERNEL_DIR}"/gcc-arm64-master "${KERNEL_DIR}"/gcc64
+      fi
+
+      if [ ! -d "${KERNEL_DIR}/gcc32" ]; then
+    	curl -sL https://github.com/cyberknight777/gcc-arm/archive/refs/heads/master.tar.gz | tar -xzf -
+        mv "${KERNEL_DIR}"/gcc-arm-master "${KERNEL_DIR}"/gcc32
+      fi
+    export PATH="${KERNEL_DIR}"/gcc32/bin:"${KERNEL_DIR}"/gcc64/bin:/usr/bin:${PATH}
 	
 	fi
 	
 	
     # Clone AnyKernel
-    git clone --depth=1 https://github.com/missgoin/AnyKernel3.git
+    git clone --depth=1 https://github.com/neternels/anykernel3 -b sunny AnyKernel3
 
 	}
 
@@ -173,6 +186,11 @@ function exports() {
         elif [ -d ${KERNEL_DIR}/aosp-clang ];
             then
                export KBUILD_COMPILER_STRING=$(${KERNEL_DIR}/aosp-clang/bin/clang --version | head -n 1 | perl -pe 's/\(http.*?\)//gs' | sed -e 's/  */ /g' -e 's/[[:space:]]*$//')
+        
+        elif [ -d ${KERNEL_DIR}/gcc64 ];
+            then
+               export KBUILD_COMPILER_STRING=$("${KERNEL_DIR}"/gcc64/bin/aarch64-elf-gcc --version | head -n 1)
+        
         fi
         
         # Export ARCH and SUBARCH
@@ -352,12 +370,32 @@ START=$(date +"%s")
 	       #READELF=llvm-readelf \
 	       #OBJSIZE=llvm-size \
 	       V=$VERBOSE 2>&1 | tee error.log
-	       
+
+	elif [ -d ${KERNEL_DIR}/gcc64 ];
+       then
+           make -kj$(nproc --all) O=out \
+           ARCH=arm64 \
+           CC=aarch64-elf-gcc \
+           CROSS_COMPILE=aarch64-elf- \
+           CROSS_COMPILE_ARM32=arm-eabi- \
+           LD="${KERNEL_DIR}"/gcc64/bin/aarch64-elf-"${LINKER}" \
+           AR=llvm-ar \
+           NM=llvm-nm \
+           OBJDUMP=llvm-objdump \
+           OBJCOPY=llvm-objcopy \
+           OBJSIZE=llvm-objsize \
+           STRIP=llvm-strip \
+           HOSTAR=llvm-ar \
+           HOSTCC=gcc \
+           HOSTCXX=aarch64-elf-g++ \
+           V=$VERBOSE 2>&1 | tee error.log 
+           
 	fi
 	
 	echo "**** Verify Image.gz-dtb & dtbo.img ****"
-    ls $(pwd)/out/arch/arm64/boot/Image.gz-dtb
+    ls $(pwd)/out/arch/arm64/boot/Image
     ls $(pwd)/out/arch/arm64/boot/dtbo.img
+    ls $(pwd)/out/arch/arm64/boot/dts/qcom/sm6150.dtb
     
 }
 
@@ -367,6 +405,7 @@ function zipping() {
 	cp $IMAGE AnyKernel3
 	cp $DTBO AnyKernel3
 	#find $DTB -name "*.dtb" -exec cat {} + > AnyKernel3/dtb
+	cat $DTB > AnyKernel3/dtb
 	
 	# Zipping and Push Kernel
 	cd AnyKernel3 || exit 1
