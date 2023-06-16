@@ -48,7 +48,7 @@ FINAL_ZIP_ALIAS=Karenulmoji-${TANGGAL}.zip
 ##----------------------------------------------------------##
 # Specify compiler.
 
-COMPILER=eva
+COMPILER=evagcc
 
 ##----------------------------------------------------------##
 # Specify Linker
@@ -402,6 +402,7 @@ START=$(date +"%s")
 ##----------------------------------------------------------------##
 function zipping() {
 	# Copy Files To AnyKernel3 Zip
+	mkdir -p AnyKernel3/dtbs
 	cp $IMAGE AnyKernel3
 	cp $DTBO AnyKernel3
 	#find $DTB -name "*.dtb" -exec cat {} + > AnyKernel3/dtb
