@@ -52,8 +52,7 @@ COMPILER=evagcc
 
 ##----------------------------------------------------------##
 # Specify Linker
-LINKER=ld.lld
-
+export LINKER="ld.lld"
 ##----------------------------------------------------------##
 
 ##----------------------------------------------------------##
@@ -206,6 +205,9 @@ function exports() {
         
 	    export PROCS=$(nproc --all)
 	    export DISTRO=$(source /etc/os-release && echo "${NAME}")
+	    
+	    PROCS=$(nproc --all)
+        export PROCS
 	    
 	    # Server caching for speed up compile
 	    #export LC_ALL=C && export USE_CCACHE=1
