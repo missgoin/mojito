@@ -48,11 +48,11 @@ FINAL_ZIP_ALIAS=Karenulmoji-${TANGGAL}.zip
 ##----------------------------------------------------------##
 # Specify compiler.
 
-COMPILER=evagcc
+COMPILER=azure
 
 ##----------------------------------------------------------##
 # Specify Linker
-export LINKER="ld.lld"
+LINKER=ld.lld
 ##----------------------------------------------------------##
 
 ##----------------------------------------------------------##
@@ -260,11 +260,11 @@ START=$(date +"%s")
 	       LD=${LINKER} \
 	       #LLVM=1 \
 	       #LLVM_IAS=1 \
-	       AR=llvm-ar \
-	       NM=llvm-nm \
-	       OBJCOPY=llvm-objcopy \
-	       OBJDUMP=llvm-objdump \
-	       STRIP=llvm-strip \
+	       #AR=llvm-ar \
+	       #NM=llvm-nm \
+	       #OBJCOPY=llvm-objcopy \
+	       #OBJDUMP=llvm-objdump \
+	       #STRIP=llvm-strip \
 	       #READELF=llvm-readelf \
 	       #OBJSIZE=llvm-size \
 	       V=$VERBOSE 2>&1 | tee error.log
