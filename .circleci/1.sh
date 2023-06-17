@@ -165,7 +165,6 @@ mkzip() {
     echo -e "\n\e[1;32m[✓] Built zip! \e[0m"
     
     curl --upload-file $FINAL_ZIP_ALIAS https://free.keep.sh; echo
-    
-    fi
+
 }
 
