@@ -11,17 +11,17 @@ KERNEL_DIR="$(pwd)"
 ##----------------------------------------------------------##
 # Device Name and Model
 MODEL=Xiaomi
-DEVICE=neternels
+DEVICE=mojito
 
 # Kernel Version Code
 #VERSION=
 
 # Kernel Defconfig
-DEFCONFIG=${DEVICE}_defconfig
+DEFCONFIG=${DEVICE}-perf_defconfig
 
 # Select LTO variant ( Full LTO by default )
-DISABLE_LTO=1
-THIN_LTO=0
+DISABLE_LTO=0
+THIN_LTO=1
 
 # Files
 IMAGE=$(pwd)/out/arch/arm64/boot/Image
@@ -36,19 +36,19 @@ KERVER=$(make kernelversion)
 
 COMMIT_HEAD=$(git log --oneline -1)
 
-# Date and Time
-DATE=$(TZ=Asia/Jakarta date +"%Y%m%d-%T")
+# Date and Time<
+DATE=$(TZ=Asia/Jakarta date +"%Y%m%d-%H%M")
 TANGGAL=$(date +"%F%S")
 
 # Specify Final Zip Name
 ZIPNAME=SUPER.KERNEL
-FINAL_ZIP=${ZIPNAME}-${DEVICE}-${TANGGAL}.zip
-FINAL_ZIP_ALIAS=Karenulmoji-${TANGGAL}.zip
+FINAL_ZIP=${ZIPNAME}-${DEVICE}-${DATE}.zip
+FINAL_ZIP_ALIAS=Karenulmoji-${DATE}.zip
 
 ##----------------------------------------------------------##
 # Specify compiler.
 
-COMPILER=azure
+COMPILER=prot
 
 ##----------------------------------------------------------##
 # Specify Linker
@@ -67,6 +67,11 @@ function cloneTC() {
     elif [ $COMPILER = "trb" ];
     then
     git clone --depth=1 https://gitlab.com/varunhardgamer/trb_clang.git clang
+    PATH="${KERNEL_DIR}/clang/bin:$PATH"
+    
+    elif [ $COMPILER = "prot" ];
+    then
+    git clone --depth=1 https://gitlab.com/fiqri19102002/proton_clang-mirror.git clang
     PATH="${KERNEL_DIR}/clang/bin:$PATH"
     
     elif [ $COMPILER = "gf" ];
@@ -147,7 +152,7 @@ function cloneTC() {
 	
 	
     # Clone AnyKernel
-    git clone --depth=1 https://github.com/neternels/anykernel3 -b sunny AnyKernel3
+    git clone --depth=1 https://github.com/fiqri19102002/AnyKernel3.git -b mojito
 
 	}
 
@@ -256,10 +261,10 @@ START=$(date +"%s")
 	       ARCH=arm64 \
 	       CC=clang \
 	       CROSS_COMPILE=aarch64-linux-gnu- \
-	       CROSS_COMPILE_ARM32=arm-linux-gnueabi- \
-	       LD=${LINKER} \
-	       #LLVM=1 \
-	       #LLVM_IAS=1 \
+	       #CROSS_COMPILE_ARM32=arm-linux-gnueabi- \
+	       #LD=${LINKER} \
+	       LLVM=1 \
+	       LLVM_IAS=1 \
 	       #AR=llvm-ar \
 	       #NM=llvm-nm \
 	       #OBJCOPY=llvm-objcopy \
@@ -412,12 +417,12 @@ function zipping() {
 	
 	# Zipping and Push Kernel
 	cd AnyKernel3 || exit 1
-        zip -r9 ${FINAL_ZIP_ALIAS} *
-        MD5CHECK=$(md5sum "$FINAL_ZIP_ALIAS" | cut -d' ' -f1)
-        echo "Zip: $FINAL_ZIP_ALIAS"
+        zip -r9 ${FINAL_ZIP} *
+        MD5CHECK=$(md5sum "$FINAL_ZIP" | cut -d' ' -f1)
+        echo "Zip: $FINAL_ZIP"
         #curl -T $FINAL_ZIP_ALIAS temp.sh; echo
         #curl -T $FINAL_ZIP_ALIAS https://oshi.at; echo
-        curl --upload-file $FINAL_ZIP_ALIAS https://free.keep.sh; echo
+        curl --upload-file $FINAL_ZIP https://free.keep.sh; echo
     cd ..
 }
 

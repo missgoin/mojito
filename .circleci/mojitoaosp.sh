@@ -6,7 +6,7 @@ TC_DIR="$PWD/tc/r487747"
 GCC_64_DIR="$PWD/tc/aarch64-linux-android-4.9"
 GCC_32_DIR="$PWD/tc/arm-linux-androideabi-4.9"
 #AK3_DIR="$PWD/AnyKernel3"
-DEFCONFIG="neternels_defconfig"
+DEFCONFIG="mojito_defconfig"
 
 export PATH="$TC_DIR/bin:$PATH"
 export KBUILD_BUILD_USER="unknown"
@@ -63,9 +63,9 @@ make -j$(nproc --all) O=out ARCH=arm64 \
     CROSS_COMPILE=$GCC_64_DIR/bin/aarch64-linux-android- \
     CROSS_COMPILE_ARM32=$GCC_32_DIR/bin/arm-linux-androideabi- \
     CLANG_TRIPLE=aarch64-linux-gnu- \
-    Image dtbo.img
+    Image.gz
 
-if [ -f "out/arch/arm64/boot/Image.gz-dtb" ] && [ -f "out/arch/arm64/boot/dtbo.img" ]; then
+if [ -f "out/arch/arm64/boot/Image.gz" ]; then
 echo -e "\nKernel compiled succesfully! Zipping up...\n"
 
 #if [ -d "$AK3_DIR" ]; then
@@ -75,11 +75,11 @@ echo -e "\nKernel compiled succesfully! Zipping up...\n"
 #exit 1
 #fi
 
-#git clone --depth=1 https://github.com/missgoin/AnyKernel3.git
-git clone --depth=1 https://github.com/neternels/anykernel3 -b sunny AnyKernel3
+git clone --depth=1 https://github.com/missgoin/AnyKernel3.git
+#git clone --depth=1 https://github.com/neternels/anykernel3 -b sunny AnyKernel3
 
-cp out/arch/arm64/boot/Image AnyKernel3
-cp out/arch/arm64/boot/dtbo.img AnyKernel3
+cp out/arch/arm64/boot/Image.gz AnyKernel3
+#cp out/arch/arm64/boot/dtbo.img AnyKernel3
 
 rm -f *zip
 cd AnyKernel3
