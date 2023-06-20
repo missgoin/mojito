@@ -48,11 +48,11 @@ FINAL_ZIP_ALIAS=Karenulmoji-${DATE}.zip
 ##----------------------------------------------------------##
 # Specify compiler.
 
-COMPILER=prot
+COMPILER=gcc
 
 ##----------------------------------------------------------##
 # Specify Linker
-LINKER=ld.lld
+#LINKER=ld.lld
 ##----------------------------------------------------------##
 
 ##----------------------------------------------------------##
@@ -147,12 +147,46 @@ function cloneTC() {
         mv "${KERNEL_DIR}"/gcc-arm-master "${KERNEL_DIR}"/gcc32
       fi
     export PATH="${KERNEL_DIR}"/gcc32/bin:"${KERNEL_DIR}"/gcc64/bin:/usr/bin:${PATH}
+    
+    
+    elif [ ${COMPILER} == "gcc" ]; 
+    then
+    if [ ! -d "${KERNEL_DIR}/gcc64" ]; then
+        curl -sL https://github.com/cyberknight777/gcc-arm64/archive/refs/heads/master.tar.gz | tar -xzf -
+        mv "${KERNEL_DIR}"/gcc-arm64-master "${KERNEL_DIR}"/gcc64
+    fi
+
+    if [ ! -d "${KERNEL_DIR}/gcc32" ]; then
+	curl -sL https://github.com/cyberknight777/gcc-arm/archive/refs/heads/master.tar.gz | tar -xzf -
+        mv "${KERNEL_DIR}"/gcc-arm-master "${KERNEL_DIR}"/gcc32
+    fi
+
+    KBUILD_COMPILER_STRING=$("${KERNEL_DIR}"/gcc64/bin/aarch64-elf-gcc --version | head -n 1)
+    export KBUILD_COMPILER_STRING
+    export PATH="${KERNEL_DIR}"/gcc32/bin:"${KERNEL_DIR}"/gcc64/bin:/usr/bin/:${PATH}
+    MAKE+=(
+        ARCH=arm64
+        O=out
+        CROSS_COMPILE=aarch64-elf-
+        CROSS_COMPILE_ARM32=arm-eabi-
+        LD="${KERNEL_DIR}"/gcc64/bin/aarch64-elf-"${LINKER}"
+        AR=llvm-ar
+        NM=llvm-nm
+        OBJDUMP=llvm-objdump
+        OBJCOPY=llvm-objcopy
+        OBJSIZE=llvm-objsize
+        STRIP=llvm-strip
+        HOSTAR=llvm-ar
+        HOSTCC=gcc
+        HOSTCXX=aarch64-elf-g++
+        CC=aarch64-elf-gcc
+    )
 	
 	fi
 	
 	
     # Clone AnyKernel
-    git clone --depth=1 https://github.com/fiqri19102002/AnyKernel3.git -b mojito
+    git clone --depth=1 https://github.com/neternels/anykernel3.git -b mojito
 
 	}
 
@@ -191,9 +225,9 @@ function exports() {
             then
                export KBUILD_COMPILER_STRING=$(${KERNEL_DIR}/aosp-clang/bin/clang --version | head -n 1 | perl -pe 's/\(http.*?\)//gs' | sed -e 's/  */ /g' -e 's/[[:space:]]*$//')
         
-        elif [ -d ${KERNEL_DIR}/gcc64 ];
-            then
-               export KBUILD_COMPILER_STRING=$("${KERNEL_DIR}"/gcc64/bin/aarch64-elf-gcc --version | head -n 1)
+        #elif [ -d ${KERNEL_DIR}/gcc64 ];
+        #    then
+        #       export KBUILD_COMPILER_STRING=$("${KERNEL_DIR}"/gcc64/bin/aarch64-elf-gcc --version | head -n 1)
         
         fi
         
@@ -226,7 +260,7 @@ function exports() {
 
 # Export Configs
 function configs() {
-    if [ -d ${KERNEL_DIR}/clang ] || [ -d ${KERNEL_DIR}/aosp-clang  ] || [ -d ${KERNEL_DIR}/cosmic-clang  ]; then
+    if [ -d ${KERNEL_DIR}/clang ] || [ -d ${KERNEL_DIR}/gcc64  ] || [ -d ${KERNEL_DIR}/cosmic-clang  ]; then
        if [ $DISABLE_LTO = "1" ]; then
           sed -i 's/CONFIG_LTO_CLANG=y/# CONFIG_LTO_CLANG is not set/' arch/arm64/configs/${DEFCONFIG}
           sed -i 's/CONFIG_LTO=y/# CONFIG_LTO is not set/' arch/arm64/configs/${DEFCONFIG}
@@ -261,15 +295,15 @@ START=$(date +"%s")
 	       ARCH=arm64 \
 	       CC=clang \
 	       CROSS_COMPILE=aarch64-linux-gnu- \
-	       #CROSS_COMPILE_ARM32=arm-linux-gnueabi- \
-	       #LD=${LINKER} \
-	       LLVM=1 \
-	       LLVM_IAS=1 \
-	       #AR=llvm-ar \
-	       #NM=llvm-nm \
-	       #OBJCOPY=llvm-objcopy \
-	       #OBJDUMP=llvm-objdump \
-	       #STRIP=llvm-strip \
+	       CROSS_COMPILE_ARM32=arm-linux-gnueabi- \
+	       LD=${LINKER} \
+	       #LLVM=1 \
+	       #LLVM_IAS=1 \
+	       AR=llvm-ar \
+	       NM=llvm-nm \
+	       OBJCOPY=llvm-objcopy \
+	       OBJDUMP=llvm-objdump \
+	       STRIP=llvm-strip \
 	       #READELF=llvm-readelf \
 	       #OBJSIZE=llvm-size \
 	       V=$VERBOSE 2>&1 | tee error.log
@@ -377,25 +411,6 @@ START=$(date +"%s")
 	       #READELF=llvm-readelf \
 	       #OBJSIZE=llvm-size \
 	       V=$VERBOSE 2>&1 | tee error.log
-
-	elif [ -d ${KERNEL_DIR}/gcc64 ];
-       then
-           make -kj$(nproc --all) O=out \
-           ARCH=arm64 \
-           CC=aarch64-elf-gcc \
-           CROSS_COMPILE=aarch64-elf- \
-           CROSS_COMPILE_ARM32=arm-eabi- \
-           LD="${KERNEL_DIR}"/gcc64/bin/aarch64-elf-"${LINKER}" \
-           AR=llvm-ar \
-           NM=llvm-nm \
-           OBJDUMP=llvm-objdump \
-           OBJCOPY=llvm-objcopy \
-           OBJSIZE=llvm-objsize \
-           STRIP=llvm-strip \
-           HOSTAR=llvm-ar \
-           HOSTCC=gcc \
-           HOSTCXX=aarch64-elf-g++ \
-           V=$VERBOSE 2>&1 | tee error.log 
            
 	fi
 	
@@ -430,7 +445,7 @@ function zipping() {
 ##----------------------------------------------------------##
 
 cloneTC
-exports
+#exports
 configs
 compile
 zipping
