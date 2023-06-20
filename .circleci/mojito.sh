@@ -48,11 +48,11 @@ FINAL_ZIP_ALIAS=Karenulmoji-${DATE}.zip
 ##----------------------------------------------------------##
 # Specify compiler.
 
-COMPILER=gcc
+COMPILER=clang9
 
 ##----------------------------------------------------------##
 # Specify Linker
-#LINKER=ld.lld
+LINKER=ld.lld
 ##----------------------------------------------------------##
 
 ##----------------------------------------------------------##
@@ -149,39 +149,31 @@ function cloneTC() {
     export PATH="${KERNEL_DIR}"/gcc32/bin:"${KERNEL_DIR}"/gcc64/bin:/usr/bin:${PATH}
     
     
-    elif [ ${COMPILER} == "gcc" ]; 
-    then
-    if [ ! -d "${KERNEL_DIR}/gcc64" ]; then
-        curl -sL https://github.com/cyberknight777/gcc-arm64/archive/refs/heads/master.tar.gz | tar -xzf -
-        mv "${KERNEL_DIR}"/gcc-arm64-master "${KERNEL_DIR}"/gcc64
-    fi
+    elif [ $COMPILER = "clang9" ];
+	then
+	#git clone https://android.googlesource.com/platform/prebuilts/clang/host/linux-x86/ -b android10-gsi --depth 1 --no-tags --single-branch clang_all
+    wget https://android.googlesource.com/platform/prebuilts/clang/host/linux-x86/+archive/android-9.0.0_r6/clang-4639204.tar.gz && mkdir clang && tar -xzvf clang-4639204.tar.gz -C clang/
+    #mv clang_all/clang-r353983c clang
+    #rm -rf clang_all
+    export KERNEL_CLANG_PATH="${KERNEL_DIR}/clang"
+    export KERNEL_CLANG="clang"
+    export PATH="$KERNEL_CLANG_PATH/bin:$PATH"
+    CLANG_VERSION=$(clang --version | grep version | sed "s|clang version ||")
+    
+    wget https://releases.linaro.org/components/toolchain/binaries/latest-5/aarch64-linux-gnu/gcc-linaro-5.5.0-2017.10-x86_64_aarch64-linux-gnu.tar.xz && tar -xf gcc-linaro-5.5.0-2017.10-x86_64_aarch64-linux-gnu.tar.xz
+    mv gcc-linaro-5.5.0-2017.10-x86_64_aarch64-linux-gnu gcc64
+    export KERNEL_CCOMPILE64_PATH="${KERNEL_DIR}/gcc64"
+    export KERNEL_CCOMPILE64="aarch64-linux-gnu-"
+    export PATH="$KERNEL_CCOMPILE64_PATH/bin:$PATH"
+    GCC_VERSION=$(aarch64-linux-gnu-gcc --version | grep "(GCC)" | sed 's|.*) ||')
+   
+    wget https://releases.linaro.org/components/toolchain/binaries/latest-5/arm-linux-gnueabihf/gcc-linaro-5.5.0-2017.10-x86_64_arm-linux-gnueabihf.tar.xz && tar -xf gcc-linaro-5.5.0-2017.10-x86_64_arm-linux-gnueabihf.tar.xz
+    mv gcc-linaro-5.5.0-2017.10-x86_64_arm-linux-gnueabihf gcc32
+    export KERNEL_CCOMPILE32_PATH="${KERNEL_DIR}/gcc32"
+    export KERNEL_CCOMPILE32="arm-linux-gnueabihf-"
+    export PATH="$KERNEL_CCOMPILE32_PATH/bin:$PATH"
+    
 
-    if [ ! -d "${KERNEL_DIR}/gcc32" ]; then
-	curl -sL https://github.com/cyberknight777/gcc-arm/archive/refs/heads/master.tar.gz | tar -xzf -
-        mv "${KERNEL_DIR}"/gcc-arm-master "${KERNEL_DIR}"/gcc32
-    fi
-
-    KBUILD_COMPILER_STRING=$("${KERNEL_DIR}"/gcc64/bin/aarch64-elf-gcc --version | head -n 1)
-    export KBUILD_COMPILER_STRING
-    export PATH="${KERNEL_DIR}"/gcc32/bin:"${KERNEL_DIR}"/gcc64/bin:/usr/bin/:${PATH}
-    MAKE+=(
-        ARCH=arm64
-        O=out
-        CROSS_COMPILE=aarch64-elf-
-        CROSS_COMPILE_ARM32=arm-eabi-
-        LD="${KERNEL_DIR}"/gcc64/bin/aarch64-elf-"${LINKER}"
-        AR=llvm-ar
-        NM=llvm-nm
-        OBJDUMP=llvm-objdump
-        OBJCOPY=llvm-objcopy
-        OBJSIZE=llvm-objsize
-        STRIP=llvm-strip
-        HOSTAR=llvm-ar
-        HOSTCC=gcc
-        HOSTCXX=aarch64-elf-g++
-        CC=aarch64-elf-gcc
-    )
-	
 	fi
 	
 	
@@ -291,21 +283,19 @@ START=$(date +"%s")
 
 	if [ -d ${KERNEL_DIR}/clang ];
 	   then
-	       make -kj$(nproc --all) O=out \
+	       make -j$(nproc --all) O=out \
 	       ARCH=arm64 \
-	       CC=clang \
-	       CROSS_COMPILE=aarch64-linux-gnu- \
-	       CROSS_COMPILE_ARM32=arm-linux-gnueabi- \
-	       LD=${LINKER} \
-	       #LLVM=1 \
-	       #LLVM_IAS=1 \
-	       AR=llvm-ar \
-	       NM=llvm-nm \
-	       OBJCOPY=llvm-objcopy \
-	       OBJDUMP=llvm-objdump \
-	       STRIP=llvm-strip \
-	       #READELF=llvm-readelf \
-	       #OBJSIZE=llvm-size \
+	       CC=$KERNEL_CLANG \
+           CROSS_COMPILE=$KERNEL_CCOMPILE64 \
+           CROSS_COMPILE_ARM32=$KERNEL_CCOMPILE32 \
+           #LD=${LINKER} \
+           #LLVM=1 \
+           #LLVM_IAS=1 \
+           #AR=llvm-ar \
+           #NM=llvm-nm \
+           #OBJCOPY=llvm-objcopy \
+           #OBJDUMP=llvm-objdump \
+           #STRIP=llvm-strip \
 	       V=$VERBOSE 2>&1 | tee error.log
 	       
 	elif [ -d ${KERNEL_DIR}/cosmic ];
